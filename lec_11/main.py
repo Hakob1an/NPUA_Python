@@ -1,49 +1,58 @@
 import requests
-import json
-import random
-import string
 
-# Function to generate a random string for anonymity
-def generate_random_string(length):
-    return ''.join(random.choice(string.ascii_letters) for i in range(length))
+base_url = "https://jsonplaceholder.typicode.com"
 
-url = "https://example.com/api/posts"  # Replace with a generic URL
+# GET request to /posts
+response = requests.get(f"{base_url}/posts")
 
-response = requests.get(url)
-data = response.json()
+if response.status_code == 200:
+    # Filter titles with more than 6 words
+    posts = response.json()
+    filtered_posts = [post for post in posts if len(post['title'].split()) <= 6]
 
-filtered_titles = []
-filtered_posts = []
+    # Filter out results with more than 3 lines of description
+    filtered_posts = [post for post in filtered_posts if len(post['body'].split('\n')) <= 3]
 
-for item in data:
-    if len(item["title"].split()) > 6:
-        filtered_titles.append(item["title"])
-    if len(item["body"].split('\n')) > 3:
-        filtered_posts.append(item)
+    print("Filtered Posts:")
+    for post in filtered_posts:
+        print(f"Title: {post['title']}")
+        print(f"Body: {post['body']}")
+        print("------")
 
-print("Filtered titles with more than 6 words:")
+# POST request to /posts
+new_post_data = {
+    'title': 'New Post',
+    'body': 'This is a new post body.',
+    'userId': 1
+}
+response = requests.post(f"{base_url}/posts", json=new_post_data)
 
-for title in filtered_titles:
-    print(title)
+if response.status_code == 201:
+    print("New Post Created:")
+    print(response.json())
+else:
+    print(f"Failed to create a new post. Status code: {response.status_code}")
 
-print("\nPosts with body containing more than 3 lines of description:")
-for post in filtered_posts:
-    print(f"\nTitle: {post['title']}")
-    print(f"Body:\n{post['body']}")
+# PUT request to /posts/{post_id}
+post_id_to_update = 1
+update_data = {
+    'title': 'Updated Title',
+    'body': 'This is the updated body.',
+    'userId': 1
+}
+response = requests.put(f"{base_url}/posts/{post_id_to_update}", json=update_data)
 
-new_post = {"title": "Programming", "body": "Python is a programming language.", "id": 101}
-response = requests.post(url, new_post)
-if response.status_code >= 200 and response.status_code <= 299:
-    print("A new post has been added!")
+if response.status_code == 200:
+    print("Post Updated:")
+    print(response.json())
+else:
+    print(f"Failed to update the post. Status code: {response.status_code}")
 
-new_post_updated = {"title": "Programming", "body": "C++ is a programming language."}
-post_id_to_update = random.randint(1, len(data))
-response = requests.put(f"{url}/{post_id_to_update}", new_post_updated)
-if response.status_code >= 200 and response.status_code <= 299:
-    print("A post has been updated!")
+# DELETE request to /posts/{post_id}
+post_id_to_delete = 1
+response = requests.delete(f"{base_url}/posts/{post_id_to_delete}")
 
-post_id_to_delete = random.randint(1, len(data))
-response = requests.delete(f"{url}/{post_id_to_delete}")
-if response.status_code >= 200 and response.status_code <= 299:
-    print("A post has been deleted!")
-
+if response.status_code == 200:
+    print(f"Post {post_id_to_delete} deleted successfully.")
+else:
+    print(f"Failed to delete the post. Status code: {response.status_code}")
